@@ -88,12 +88,12 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    Id: <input type="text" id="txtid" name="txtid">
+                    Id: <input type="text" id="txtid" name="txtid" readonly>
                     Fecha: <input type="text" id="txtFecha" name="txtFecha">
                     Titulo: <input type="text" id="txtTitulo" name="txtTitulo">
-                    Hora: <input type="text" id="txtHora" name="txtHora" valvue="10:30">
+                    Hora: <input type="text" id="txtHora" name="txtHora" value="10:30">
                     Descripcion: <textarea id="txtDescripcion" name="txtDescripcion" rows="3"></textarea>
-                    Color: <input type="color" id="txtColor" valvue="#ff0000">
+                    Color: <input type="color" id="txtColor" value="#ff0000">
 
                 </div>
                 <div class="modal-footer">
@@ -109,16 +109,14 @@
     <script>
     var NuevoEvento;
     $('#btnAgregar').click(function(){
-        RecolectarDatosGUI();
-        EnviarInformacion('agregar',NuevoEvento)
+        EnviarInformacion('agregar', RecolectarDatosGUI())
     });
     $('#btnBorrar').click(function(){
-        RecolectarDatosGUI();
-        EnviarInformacion('eliminar',NuevoEvento)
+        EnviarInformacion('eliminar', RecolectarDatosGUI())
     });
 
     function RecolectarDatosGUI(){
-        var NuevoEvento= {
+        return {
             id:$('#txtid').val(),
             title:$('#txtTitulo').val(),
             start:$('#txtFecha').val()+" "+$('#txtHora').val(),
@@ -136,12 +134,16 @@
             data:objEvento,
             success:function(msg){
                 if(msg){
-                    $('#CalendarioWeb').fullCalendar('refetchEvent');
+                    // console.log("evento ..." + JSON.stringify(msg));
+                    $('#CalendarioWeb').fullCalendar('refetchEvents');
                     $("#Eventosmodal").modal('toggle');
                 }
-            },
-            error:function(){
-                alert("Hay un error ...");
+                else{
+                    console.log("Hay un error en servidor ..." + msg);
+                }
+            },error: function(XMLHttpRequest, textStatus, errorThrown) {
+                alert("Status: " + textStatus); alert("Error: " + errorThrown);
+                console.log("Hay un error ..." + JSON.stringify(XMLHttpRequest));
             }
         });
     }
