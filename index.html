@@ -61,7 +61,7 @@
                     //H2
                     $('#TituloEvento').html(calEvent.title);
                     //Mostrar la Informacion del evento en los inputs
-                    $('#txtDescripcion').val(calEvent.descripcion);
+                   
                     $('#txtid').val(calEvent.id);
                     $('#txtTitulo').val(calEvent.title);
                     $('#txtColor').val(calEvent.color);
@@ -71,6 +71,20 @@
                     $('#txtHora').val(FechaHora[1]);
 
                     $("#Eventosmodal").modal();
+                },
+                editable:true,
+                eventDrop:function(calEvent){
+                    $('#txtid').val(calEvent.id);
+                    $('#txtTitulo').val(calEvent.title);
+                    $('#txtColor').val(calEvent.color);
+                    $('#txtDescripcion').val(calEvent.descripcion);
+
+                    var FechaHora= calEvent.start.format().split("T");
+                    $('#txtFecha').val(FechaHora[0]);
+                    $('#txtHora').val(FechaHora[1]);
+
+                    RecolectarDatosGUI();
+                    EnviarInformacion('modificar',NuevoEvento,true);
                 }
 
             });
@@ -98,7 +112,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" id="btnAgregar" class="btn btn-success">Agregar</button>
-                    <button type="button" class="btn btn-success">Modificar</button>
+                    <button type="button" id="btnActualizar" class="btn btn-success">Modificar</button>
                     <button type="button" id="btnBorrar" class="btn btn-danger">Borrar</button>
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
                 </div>
@@ -114,6 +128,9 @@
     $('#btnBorrar').click(function(){
         EnviarInformacion('eliminar', RecolectarDatosGUI())
     });
+    $('#btnActualizar').click(function(){
+        EnviarInformacion('modificar', RecolectarDatosGUI())
+    });
 
     function RecolectarDatosGUI(){
         return {
@@ -127,7 +144,7 @@
         };
     }
 
-    function EnviarInformacion(accion,objEvento){
+    function EnviarInformacion(accion,objEvento,modal){
         $.ajax({
             type:'POST',
             url:'eventos.php?accion='+accion,
@@ -136,7 +153,9 @@
                 if(msg){
                     // console.log("evento ..." + JSON.stringify(msg));
                     $('#CalendarioWeb').fullCalendar('refetchEvents');
-                    $("#Eventosmodal").modal('toggle');
+                    if(!modal){
+                        $("#Eventosmodal").modal('toggle');
+                    }
                 }
                 else{
                     console.log("Hay un error en servidor ..." + msg);
