@@ -20,6 +20,10 @@
     <!-- bootstrap -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+
+    <!-- Reloj -->
+    <script src="js/bootstrap-clockpicker.js"></script>
+    <link rel="stylesheet" href="css/bootstrap-clockpicker.css">
 </head>
 
 <body>
@@ -50,18 +54,28 @@
                     }
                 },
                 dayClick: function (date, jsEvent, view) {
+                    $('#btnAgregar').prop("disabled",false);
+                    $('#btnActualizar').prop("disabled",true);
+                    $('#btnBorrar').prop("disabled",true);
+
                     // alert("Valor seleccionado:" + date.format('H:m'));
                     // alert("Vista actual:" + view.name);
                     // $(this).css('background-color','red');
+                    limpiarFormulario();
                     $('#txtFecha').val(date.format());
                     $("#Eventosmodal").modal();
                 },
                     events:'http://localhost/calendario/eventos.php',
                 eventClick:function(calEvent,jsEvent,view){
+
+                    $('#btnAgregar').prop("disabled",true);
+                    $('#btnActualizar').prop("disabled",false);
+                    $('#btnBorrar').prop("disabled",false);
+
                     //H2
                     $('#TituloEvento').html(calEvent.title);
                     //Mostrar la Informacion del evento en los inputs
-                   
+
                     $('#txtid').val(calEvent.id);
                     $('#txtTitulo').val(calEvent.title);
                     $('#txtColor').val(calEvent.color);
@@ -83,8 +97,7 @@
                     $('#txtFecha').val(FechaHora[0]);
                     $('#txtHora').val(FechaHora[1]);
 
-                    RecolectarDatosGUI();
-                    EnviarInformacion('modificar',NuevoEvento,true);
+                    EnviarInformacion('modificar',RecolectarDatosGUI(),true)
                 }
 
             });
@@ -92,7 +105,8 @@
     </script>
 
     <!-- Modal -->
-    <div class="modal fade" id="Eventosmodal" tabindex="-1" role="dialog" aria-labelledby="EventosmodalTitle" aria-hidden="true">
+    <div class="modal fade" id="Eventosmodal" tabindex="-1" role="dialog" aria-labelledby="EventosmodalTitle"
+        aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -102,70 +116,93 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    Id: <input type="text" id="txtid" name="txtid" readonly>
-                    Fecha: <input type="text" id="txtFecha" name="txtFecha">
-                    Titulo: <input type="text" id="txtTitulo" name="txtTitulo">
-                    Hora: <input type="text" id="txtHora" name="txtHora" value="10:30">
-                    Descripcion: <textarea id="txtDescripcion" name="txtDescripcion" rows="3"></textarea>
-                    Color: <input type="color" id="txtColor" value="#ff0000">
-
+                    <input type="hidden" id="txtid" name="txtid">
+                    <input type="hidden" id="txtFecha" name="txtFecha">
+                    <div class="form-row">
+                        <div class="form-group col-md-8">
+                            <label>Titulo:</label>
+                            <input type="text" id="txtTitulo" name="txtTitulo" class="form-control" placeholder="Titulo del Evento">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label>Hora del Evento:</label>
+                            <div class="input-group clockpicker" data-autoclose="true">
+                                <input type="text" id="txtHora" name="txtHora" value="10:30" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Descripcion:</label>
+                        <textarea id="txtDescripcion" rows="3" class="form-control"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label> Color:</label>
+                        <input type="color" id="txtColor" value="#ff0000" class="form-control" style="height: 36px;">
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" id="btnAgregar" class="btn btn-success">Agregar</button>
                     <button type="button" id="btnActualizar" class="btn btn-success">Modificar</button>
                     <button type="button" id="btnBorrar" class="btn btn-danger">Borrar</button>
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-    var NuevoEvento;
-    $('#btnAgregar').click(function(){
-        EnviarInformacion('agregar', RecolectarDatosGUI())
-    });
-    $('#btnBorrar').click(function(){
-        EnviarInformacion('eliminar', RecolectarDatosGUI())
-    });
-    $('#btnActualizar').click(function(){
-        EnviarInformacion('modificar', RecolectarDatosGUI())
-    });
-
-    function RecolectarDatosGUI(){
-        return {
-            id:$('#txtid').val(),
-            title:$('#txtTitulo').val(),
-            start:$('#txtFecha').val()+" "+$('#txtHora').val(),
-            color:$('#txtColor').val(),
-            descripcion:$('#txtDescripcion').val(),
-            txtColor:"#FFFFFF",
-            end:$('#txtFecha').val()+" "+$('#txtHora').val(),
-        };
-    }
-
-    function EnviarInformacion(accion,objEvento,modal){
-        $.ajax({
-            type:'POST',
-            url:'eventos.php?accion='+accion,
-            data:objEvento,
-            success:function(msg){
-                if(msg){
-                    // console.log("evento ..." + JSON.stringify(msg));
-                    $('#CalendarioWeb').fullCalendar('refetchEvents');
-                    if(!modal){
-                        $("#Eventosmodal").modal('toggle');
-                    }
-                }
-                else{
-                    console.log("Hay un error en servidor ..." + msg);
-                }
-            },error: function(XMLHttpRequest, textStatus, errorThrown) {
-                alert("Status: " + textStatus); alert("Error: " + errorThrown);
-                console.log("Hay un error ..." + JSON.stringify(XMLHttpRequest));
-            }
+        var NuevoEvento;
+        $('#btnAgregar').click(function () {
+            EnviarInformacion('agregar', RecolectarDatosGUI())
         });
-    }
+        $('#btnBorrar').click(function () {
+            EnviarInformacion('eliminar', RecolectarDatosGUI())
+        });
+        $('#btnActualizar').click(function () {
+            EnviarInformacion('modificar', RecolectarDatosGUI())
+        });
+
+        function RecolectarDatosGUI() {
+            return {
+                id: $('#txtid').val(),
+                title: $('#txtTitulo').val(),
+                start: $('#txtFecha').val() + " " + $('#txtHora').val(),
+                color: $('#txtColor').val(),
+                descripcion: $('#txtDescripcion').val(),
+                txtColor: "#FFFFFF",
+                end: $('#txtFecha').val() + " " + $('#txtHora').val(),
+            };
+        }
+
+        function EnviarInformacion(accion, objEvento, modal) {
+            $.ajax({
+                type: 'POST',
+                url: 'eventos.php?accion=' + accion,
+                data: objEvento,
+                success: function (msg) {
+                    if (msg) {
+                        // console.log("evento ..." + JSON.stringify(msg));
+                        $('#CalendarioWeb').fullCalendar('refetchEvents');
+                        if (!modal) {
+                            $("#Eventosmodal").modal('toggle');
+                        }
+                    } else {
+                        console.log("Hay un error en servidor ..." + msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert("Status: " + textStatus);
+                    alert("Error: " + errorThrown);
+                    console.log("Hay un error ..." + JSON.stringify(XMLHttpRequest));
+                }
+            });
+        }
+
+        $('.clockpicker').clockpicker();
+        function limpiarFormulario(){
+                    $('#txtid').val('');
+                    $('#txtTitulo').val('');
+                    $('#txtColor').val('');
+                    $('#txtDescripcion').val('');
+                }
     </script>
 </body>
 

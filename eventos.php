@@ -42,7 +42,7 @@ switch ($accion) {
             color =:color,
             textColor =:textColor,
             start =:start,
-            end =:end,
+            end =:end
             WHERE id=:id
         ");
 
